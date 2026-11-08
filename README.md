@@ -5,7 +5,7 @@
 - 13 个机型，可单选一个或全编
 - 源码可选 immortalwrt 的**分支**（跟随上游更新）或**稳定版 tag**（出正式版号）
 - 产物自动发布到 Releases，附完整包清单与校验和
-- 25.12 / v25.12.x 已**实机验证可启动**；24.10 与 master 尚未验证
+- 25.12 / v25.12.x 已**实机验证可启动**；master 尚未验证
 
 本仓库只保留 msm8916 相关的编译流程，其它机型（mt7620 / mt7621 / mt7628 / XG-040G / sy108 等）已移除。
 
@@ -35,10 +35,10 @@
 | 下拉项 | 说明 |
 | --- | --- |
 | `openwrt-25.12` | 25.12 分支，跟随上游更新（默认） |
-| `openwrt-24.10` | 24.10 分支 |
 | `master` | 开发分支，内核随上游变化（当前 6.18） |
 | `v25.12.2` `v25.12.1` `v25.12.0` | 25.12 稳定版 tag，编出来是正式版号 |
-| `v24.10.6` `v24.10.5` | 24.10 稳定版 tag |
+
+> **24.10 系列已移除支持**：msm89xx target 在 24.10 的 6.6 内核下会被 `defconfig` 整体裁掉（`.config` 里没有 `CONFIG_TARGET_msm89xx=y`）。即使通过 API 传 `openwrt-24.10` 也会在第一步被拦下并给出提示。
 
 - **触发方式**：只有手动（Actions → Run workflow）和 `repository_dispatch`，**已去掉定时任务**
 - **机型**：另一个下拉 `device`，`all` = 全部 13 个，否则只编选中的那个
@@ -61,7 +61,6 @@ tag 会映射成对应分支来算缓存 key：`v25.12.2 → openwrt-25.12`。�
 | 源码 | 自动选的内核 |
 | --- | --- |
 | `openwrt-25.12` / `v25.12.x` | 6.12 |
-| `openwrt-24.10` / `v24.10.x` | 6.6 |
 | `master` | 6.18（随上游变化） |
 
 选定值写进 `KERNEL_PATCHVER`，由 `diy-part1.sh` 覆盖 target 里写死的 `KERNEL_PATCHVER:=7.3`。
@@ -71,8 +70,8 @@ tag 会映射成对应分支来算缓存 key：`v25.12.2 → openwrt-25.12`。�
 | 源码 | 内核 | 状态 |
 | --- | --- | --- |
 | `openwrt-25.12` / `v25.12.x` | 6.12 | ✅ 已编译并**实机启动成功**（jz02v10） |
-| `openwrt-24.10` / `v24.10.x` | 6.6 | ⚠️ 未验证（6.6 的 target 补丁很少） |
 | `master` | 6.18 | ⚠️ 未验证（上游默认内核已是 6.18，而 target 按 7.3 写的） |
+| ~~`openwrt-24.10`~~ | 6.6 | ❌ 已移除：defconfig 会把 msm89xx target 裁掉 |
 
 内核版本对上只是必要条件，能不能编通还取决于 `scripts/msm89xx/target/linux/msm89xx/patches-<内核版本>/` 的补丁是否够用。25.12 这条路已经跑通并实机验证过。
 
@@ -84,8 +83,6 @@ tag 会映射成对应分支来算缓存 key：`v25.12.2 → openwrt-25.12`。�
 | --- | --- |
 | `v25.12.2` | `https://downloads.immortalwrt.org/releases/25.12.2` |
 | `openwrt-25.12` | `https://downloads.immortalwrt.org/releases/25.12-SNAPSHOT` |
-| `v24.10.6` | `https://downloads.immortalwrt.org/releases/24.10.6` |
-| `openwrt-24.10` | `https://downloads.immortalwrt.org/releases/24.10-SNAPSHOT` |
 | `master` | `https://downloads.immortalwrt.org/snapshots` |
 
 只写 `aarch64_generic` 的 5 个通用源：`base` / `luci` / `packages` / `routing` / `telephony`。
@@ -93,7 +90,7 @@ tag 会映射成对应分支来算缓存 key：`v25.12.2 → openwrt-25.12`。�
 - **不写 target 源**：本 target（`msm89xx/msm8916`）上游没有发布，`releases/*/targets/msm89xx/msm8916/packages` 是 404
 - **也不写 `targets/armsr/armv8`**：那是 armsr 设备的 target 源，里面的 kmod 装到 msm8916 上会直接把系统搞坏
 
-25.12 用 apk，生成 `files/etc/apk/repositories.d/distfeeds.list`；24.10 及更早用 opkg，生成 `files/etc/opkg/distfeeds.conf`，两份都写。要加自己的源，写 `/etc/apk/repositories.d/customfeeds.list`。
+25.12 / master 都用 apk，生成 `files/etc/apk/repositories.d/distfeeds.list`；同时也会写一份 `files/etc/opkg/distfeeds.conf`（留给将来可能用 opkg 的分支，当前分支用不到）。要加自己的源，写 `/etc/apk/repositories.d/customfeeds.list`。
 
 ## 产物与发布
 

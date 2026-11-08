@@ -19,13 +19,10 @@ on:
         type: choice
         options:
           - openwrt-25.12
-          - openwrt-24.10
           - master
           - v25.12.2
           - v25.12.1
           - v25.12.0
-          - v24.10.6
-          - v24.10.5
       device:
         description: ' ← 选择要编译的机型'
         required: true
@@ -144,6 +141,15 @@ jobs:
         # 一个下拉同时管分支和稳定版 tag；定时触发时无 inputs，回落到 master
         BR="${{ inputs.source }}"
         [ -n "$BR" ] || BR="master"
+
+        # 24.10 已移除支持：msm89xx target 在 24.10 的 6.6 内核下会被 defconfig 整体裁掉
+        # （.config 里没有 CONFIG_TARGET_msm89xx=y），与其编到一半报错，不如这里直接拦下。
+        case "$BR" in
+        openwrt-24.10*|v24.10.*)
+          echo "::error::已不再支持 24.10（$BR）：msm89xx target 与 6.6 内核不兼容，请改用 openwrt-25.12 或 master"
+          exit 1
+          ;;
+        esac
 
         echo "immortalwrt 仓库: $REPO_URL"
         echo "选用的源码: $BR"
